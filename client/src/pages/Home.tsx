@@ -88,6 +88,7 @@ export default function Home() {
   };
 
   const handleDragEnd = () => {
+    // Usar um pequeno delay para garantir que o drop foi processado
     setTimeout(() => {
       dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
     }, 100);
@@ -124,6 +125,8 @@ export default function Home() {
     const filtered = tierList.filter(item => item.characterId !== draggedCharacter);
     setTierList([...filtered, { characterId: draggedCharacter, tier }]);
     setDraggedCharacter(null);
+    
+    // Resetar o estado de drag imediatamente após o drop
     dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
   };
 
@@ -136,7 +139,10 @@ export default function Home() {
   };
 
   const handleCardClick = (e: React.MouseEvent, characterId: string) => {
+    // Evitar abrir modal se estiver arrastando
     if (dragStateRef.current.isDragging) return;
+    
+    // Abrir modal com um pequeno delay para garantir que não é um drag
     setTimeout(() => {
       if (!dragStateRef.current.isDragging) {
         setSelectedCharacterId(characterId);
@@ -146,6 +152,7 @@ export default function Home() {
 
   const handleAddToTierFromModal = (tier: TierKey) => {
     if (!selectedCharacterId) return;
+    
     const filtered = tierList.filter(item => item.characterId !== selectedCharacterId);
     setTierList([...filtered, { characterId: selectedCharacterId, tier }]);
     setSelectedCharacterId(null);
@@ -156,7 +163,7 @@ export default function Home() {
     if (!tierListElement) return;
 
     try {
-      // Usar html2canvas com allowTaint: true para permitir imagens de outros domínios
+      // Usar html2canvas para lidar com imagens cross-origin
       const canvas = await html2canvas(tierListElement, {
         scale: 2,
         useCORS: true,
@@ -178,7 +185,18 @@ export default function Home() {
       }, 'image/png');
     } catch (err) {
       console.error('Erro ao gerar imagem:', err);
-      alert('Erro ao gerar o download. Por favor, tente novamente.');
+      // Fallback simples
+      try {
+        const dataUrl = await toPng(tierListElement, { cacheBust: true, pixelRatio: 2 });
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `tier-list-${new Date().getTime()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (e) {
+        alert('Erro ao gerar o download. Por favor, tente novamente.');
+      }
     }
   };
 
@@ -225,6 +243,7 @@ export default function Home() {
         onMouseMove={handleMouseMove} 
         onMouseUp={() => {
           handleMouseUp();
+          // Garantir que o estado de drag seja resetado ao soltar o mouse
           dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
         }} 
         onMouseLeave={() => {
@@ -239,7 +258,7 @@ export default function Home() {
           className={`flex flex-col overflow-hidden ${isResizing ? 'no-select' : ''}`}
         >
           <div className="flex-1 overflow-y-auto p-4">
-            <Card id="tier-list-card" className="p-6 bg-slate-800 border-slate-700 shadow-xl m-4 flex-1 flex flex-col overflow-hidden h-fit max-w-full">
+            <Card id="tier-list-card" className="p-6 bg-slate-800 border-slate-700 shadow-xl flex flex-col overflow-hidden h-fit max-w-full">
               <div className="flex justify-between items-center mb-6 flex-shrink-0">
                 <h2 className="text-2xl font-bold text-white">Your Tier List</h2>
                 <div className="flex gap-2">
@@ -264,7 +283,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="space-y-4 overflow-y-auto flex-1">
+              <div className="space-y-4">
                 {tiers.map(tier => (
                   <div key={tier} className="flex gap-4">
                     {/* Tier Label */}
@@ -293,7 +312,7 @@ export default function Home() {
                     <div
                       onDragOver={handleDragOver}
                       onDrop={() => handleDropOnTier(tier)}
-                      className="flex-1 bg-slate-700 rounded-lg border-2 border-dashed border-slate-600 hover:border-slate-500 transition-colors p-3 min-h-[140px] flex flex-wrap gap-2 items-start content-start overflow-y-auto"
+                      className="flex-1 bg-slate-700 rounded-lg border-2 border-dashed border-slate-600 hover:border-slate-500 transition-colors p-3 min-h-[140px] flex flex-wrap gap-2 items-start content-start"
                       style={{
                         display: 'grid',
                         gridTemplateColumns: `repeat(${tierColumnsCount}, minmax(0, 1fr))`,
@@ -351,54 +370,52 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Resizer */}
+        {/* Resize Handle */}
         <div
           onMouseDown={handleMouseDown}
-          className={`w-1.5 bg-slate-700 hover:bg-blue-500 cursor-col-resize transition-colors flex-shrink-0 resizer ${isResizing ? 'active' : ''}`}
+          className="w-1 bg-slate-700 hover:bg-slate-500 cursor-col-resize transition-colors flex-shrink-0"
         />
 
-        {/* Sidebar - Unranked Characters */}
+        {/* Unranked Characters */}
         <div 
           id="unranked-container"
           style={{ width: `${unrankedWidth}%`, transition: isResizing ? 'none' : 'width 0.2s' }}
-          className={`flex flex-col overflow-hidden ${isResizing ? 'no-select' : ''}`}
+          className="flex flex-col overflow-hidden"
         >
-          <Card className="p-4 bg-slate-800 border-slate-700 shadow-xl m-4 flex-1 flex flex-col overflow-hidden">
-            <h3 className="text-lg font-bold text-white mb-4 flex-shrink-0">
-              Unranked ({filteredCharacters.length})
-            </h3>
-
-            {/* Search Bar */}
-            <div className="mb-4 relative flex-shrink-0">
-              <Search size={16} className="absolute left-3 top-3 text-slate-500" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          <Card className="p-6 bg-slate-800 border-slate-700 shadow-xl m-4 flex-1 flex flex-col overflow-hidden">
+            <div className="flex flex-col gap-4 mb-6 flex-shrink-0">
+              <h2 className="text-2xl font-bold text-white">Available Leaders</h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search leaders..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
 
             <div 
-              className="overflow-y-auto flex-1"
+              className="flex-1 overflow-y-auto pr-2 custom-scrollbar"
               style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${unrankedColumnsCount}, minmax(0, 1fr))`,
-                gap: '0.5rem',
+                gap: '12px',
                 alignContent: 'start'
               }}
             >
               {filteredCharacters.map(character => (
                 <div
                   key={character.id}
+                  className="relative group cursor-pointer"
                   draggable
                   onDragStart={(e) => handleDragStart(e, character.id)}
                   onDragEnd={handleDragEnd}
                   onClick={(e) => handleCardClick(e, character.id)}
-                  className="p-1 bg-slate-700 hover:bg-slate-600 rounded cursor-grab active:cursor-grabbing transition-colors border border-slate-600 hover:border-slate-500 hover:scale-105 hover:shadow-lg"
                 >
-                  <div className="relative w-full h-[140px] overflow-hidden rounded-md mb-1">
+                  <div className="relative w-full h-[140px] overflow-hidden rounded-md border-2 border-slate-600 hover:border-slate-400 transition-all cursor-grab active:cursor-grabbing shadow-lg hover:shadow-xl hover:scale-105">
                     <img
                       src={character.image}
                       alt={character.name}
@@ -409,7 +426,7 @@ export default function Home() {
                       }}
                     />
                   </div>
-                  <div className="text-xs text-slate-300 text-center truncate leading-tight">
+                  <div className="text-xs text-slate-300 mt-1 text-center truncate leading-tight">
                     {character.name}
                   </div>
                   <div className="text-xs text-slate-500 text-center leading-tight">
@@ -422,82 +439,50 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Stats */}
-      {tierList.length > 0 && (
-        <div className="px-6 pb-6">
-          <Card className="p-4 bg-slate-800 border-slate-700">
-            <div className="grid grid-cols-5 gap-4 text-center">
-              {tiers.map(tier => (
-                <div key={tier}>
-                  <div
-                    className="text-lg font-bold text-white mb-1"
-                    style={{ color: TIER_COLORS[tier].bg }}
-                  >
-                    {getCharactersByTier(tier).length}
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    {TIER_COLORS[tier].name}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Fullscreen Modal */}
+      {/* Modal for tier selection */}
       {selectedCharacter && (
-        <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedCharacterId(null)}
-        >
-          <div 
-            className="relative max-w-md w-full flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setSelectedCharacterId(null)}
-              className="absolute -top-12 right-0 text-white hover:text-slate-300 transition-colors z-10"
-            >
-              <X size={32} />
-            </button>
-
-            {/* Image Container */}
-            <div className="relative w-full aspect-[3/4] overflow-hidden rounded-lg shadow-2xl mb-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedCharacterId(null)}>
+          <Card className="bg-slate-800 border-slate-700 p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-4 mb-6">
               <img
                 src={selectedCharacter.image}
                 alt={selectedCharacter.name}
-                className="w-full h-full object-contain bg-slate-900"
+                className="w-24 h-32 object-contain rounded"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src =
-                    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="140"%3E%3Crect fill="%23374151" width="100" height="140"/%3E%3C/svg%3E';
+                    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="130"%3E%3Crect fill="%23374151" width="100" height="130"/%3E%3C/svg%3E';
                 }}
               />
+              <div>
+                <h3 className="text-xl font-bold text-white">{selectedCharacter.name}</h3>
+                <p className="text-slate-400">{selectedCharacter.code}</p>
+              </div>
             </div>
 
-            {/* Tier Buttons - Quadrados abaixo do líder */}
-            <div className="grid grid-cols-5 gap-3 w-full">
+            <div className="space-y-2 mb-6">
               {tiers.map(tier => (
-                <button
+                <Button
                   key={tier}
                   onClick={() => handleAddToTierFromModal(tier)}
-                  className="aspect-square flex items-center justify-center rounded-lg font-bold text-white text-xl transition-all hover:scale-110 hover:shadow-lg active:scale-95 border-2 border-transparent hover:border-white/50"
+                  className="w-full justify-start"
                   style={{
                     backgroundColor: TIER_COLORS[tier].bg,
-                    color: tier === 'A' ? '#000' : '#fff'
+                    color: 'white'
                   }}
                 >
-                  {tier}
-                </button>
+                  {tierLabels[tier]} Tier
+                </Button>
               ))}
             </div>
-            
-            <div className="mt-6 text-center">
-              <h2 className="text-2xl font-bold text-white">{selectedCharacter.name}</h2>
-              <p className="text-slate-400">{selectedCharacter.code}</p>
-            </div>
-          </div>
+
+            <Button
+              onClick={() => setSelectedCharacterId(null)}
+              variant="outline"
+              className="w-full text-slate-300 border-slate-600 hover:bg-slate-700"
+            >
+              Cancel
+            </Button>
+          </Card>
         </div>
       )}
     </div>
