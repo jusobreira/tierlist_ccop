@@ -3,7 +3,7 @@ import { CHARACTERS, TIER_COLORS, TierKey } from '@/lib/characters';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, Download, RotateCcw, Search, Check } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 // FUNÇÃO AUXILIAR PARA O PROXY (Essencial para o download não sair em branco)
 const getProxiedImageUrl = (url: string) => {
@@ -143,55 +143,40 @@ export default function Home() {
   };
 
   // NOVA LÓGICA DE DOWNLOAD COM CORREÇÃO DE CORES OKLCH
-  const handleDownloadTierList = async () => {
+const handleDownloadTierList = async () => {
     const tierListElement = document.getElementById('tier-list-card');
     if (!tierListElement) return;
 
     try {
-      const canvas = await html2canvas(tierListElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#1e293b',
-        logging: false,
-        onclone: (clonedDoc) => {
-          const clonedCard = clonedDoc.getElementById('tier-list-card');
-          if (clonedCard) {
-            // Forçamos cores que o html2canvas entende (Hexadecimal) 
-            clonedCard.style.backgroundColor = '#1e293b'; 
-            clonedCard.style.borderColor = '#334155';
-            
-            const elements = clonedCard.getElementsByTagName('*');
-            for (let i = 0; i < elements.length; i++) {
-              const el = elements[i] as HTMLElement;
-              const style = window.getComputedStyle(el);
-              
-              if (style.backgroundColor.includes('oklch')) {
-                el.style.backgroundColor = 'transparent'; 
-              }
-              if (style.borderColor.includes('oklch')) {
-                el.style.borderColor = '#475569';
-              }
-              if (style.color.includes('oklch')) {
-                el.style.color = '#ffffff';
-              }
-            }
-          }
+      // O html-to-image lida com oklch e fontes modernas automaticamente
+      const dataUrl = await toPng(tierListElement, {
+        quality: 0.95,
+        backgroundColor: '#1e293b', // Cor de fundo do card (Slate 800)
+        cacheBust: true,
+        style: {
+          // Garante que o elemento clonado mantenha o arredondamento e bordas
+          borderRadius: '12px',
+        },
+        // Filtra elementos que você não queira no print (opcional)
+        filter: (node) => {
+          const exclusionClasses = ['download-btn', 'reset-btn'];
+          return !exclusionClasses.some(cls => 
+            (node as HTMLElement).classList?.contains(cls)
+          );
         }
       });
 
-      const url = canvas.toDataURL('image/png');
+      // Processo de salvar o arquivo
       const link = document.createElement('a');
-      link.href = url;
       link.download = `tier-list-${new Date().getTime()}.png`;
-      document.body.appendChild(link);
+      link.href = dataUrl;
       link.click();
-      document.body.removeChild(link);
     } catch (err) {
       console.error('Erro ao gerar imagem:', err);
-      alert('Erro ao gerar o download devido a cores incompatíveis. Tente novamente.');
+      alert('Houve um erro técnico ao gerar a imagem. Tente usar um navegador moderno (Chrome/Edge).');
     }
   };
+
 
   const getCharactersByTier = (tier: TierKey) => {
     return tierList
