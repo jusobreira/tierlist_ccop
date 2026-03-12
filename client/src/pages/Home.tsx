@@ -142,7 +142,7 @@ export default function Home() {
     setSelectedCharacterId(null);
   };
 
-  // LÓGICA DE DOWNLOAD CORRIGIDA
+  // NOVA LÓGICA DE DOWNLOAD COM CORREÇÃO DE CORES OKLCH
   const handleDownloadTierList = async () => {
     const tierListElement = document.getElementById('tier-list-card');
     if (!tierListElement) return;
@@ -150,10 +150,34 @@ export default function Home() {
     try {
       const canvas = await html2canvas(tierListElement, {
         scale: 2,
-        useCORS: true, // Habilita o uso de imagens com crossOrigin
+        useCORS: true,
         allowTaint: false,
         backgroundColor: '#1e293b',
         logging: false,
+        onclone: (clonedDoc) => {
+          const clonedCard = clonedDoc.getElementById('tier-list-card');
+          if (clonedCard) {
+            // Forçamos cores que o html2canvas entende (Hexadecimal) 
+            clonedCard.style.backgroundColor = '#1e293b'; 
+            clonedCard.style.borderColor = '#334155';
+            
+            const elements = clonedCard.getElementsByTagName('*');
+            for (let i = 0; i < elements.length; i++) {
+              const el = elements[i] as HTMLElement;
+              const style = window.getComputedStyle(el);
+              
+              if (style.backgroundColor.includes('oklch')) {
+                el.style.backgroundColor = 'transparent'; 
+              }
+              if (style.borderColor.includes('oklch')) {
+                el.style.borderColor = '#475569';
+              }
+              if (style.color.includes('oklch')) {
+                el.style.color = '#ffffff';
+              }
+            }
+          }
+        }
       });
 
       const url = canvas.toDataURL('image/png');
@@ -165,7 +189,7 @@ export default function Home() {
       document.body.removeChild(link);
     } catch (err) {
       console.error('Erro ao gerar imagem:', err);
-      alert('Erro ao gerar o download.');
+      alert('Erro ao gerar o download devido a cores incompatíveis. Tente novamente.');
     }
   };
 
@@ -267,7 +291,6 @@ export default function Home() {
                           onClick={(e) => handleCardClick(e, character!.id)}
                         >
                           <div className="relative w-full h-[140px] overflow-hidden rounded-md border-2 border-slate-600 shadow-lg">
-                            {/* IMAGEM COM PROXY E CORS */}
                             <img
                               src={getProxiedImageUrl(character!.image)}
                               crossOrigin="anonymous"
@@ -328,7 +351,6 @@ export default function Home() {
                   className="p-1 bg-slate-700 rounded cursor-grab active:cursor-grabbing border border-slate-600"
                 >
                   <div className="relative w-full h-[140px] overflow-hidden rounded-md mb-1">
-                    {/* IMAGEM COM PROXY E CORS */}
                     <img
                       src={getProxiedImageUrl(character.image)}
                       crossOrigin="anonymous"
@@ -367,7 +389,6 @@ export default function Home() {
           <div className="relative max-w-md w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setSelectedCharacterId(null)} className="absolute -top-12 right-0 text-white hover:text-slate-300"><X size={32} /></button>
             <div className="relative w-full aspect-[3/4] overflow-hidden rounded-lg shadow-2xl mb-6">
-              {/* IMAGEM COM PROXY E CORS NO MODAL */}
               <img
                 src={getProxiedImageUrl(selectedCharacter.image)}
                 crossOrigin="anonymous"
