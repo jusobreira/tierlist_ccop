@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { CHARACTERS, TIER_COLORS, TierKey } from '@/lib/characters';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, Download, RotateCcw, Search } from 'lucide-react';
+import { X, Download, RotateCcw, Search, Check } from 'lucide-react';
 
 interface TierListItem {
   characterId: string;
@@ -134,6 +134,14 @@ export default function Home() {
         setSelectedCharacterId(characterId);
       }
     }, 50);
+  };
+
+  const handleAddToTierFromModal = (tier: TierKey) => {
+    if (!selectedCharacterId) return;
+    
+    const filtered = tierList.filter(item => item.characterId !== selectedCharacterId);
+    setTierList([...filtered, { characterId: selectedCharacterId, tier }]);
+    setSelectedCharacterId(null);
   };
 
   const getCharactersByTier = (tier: TierKey) => {
@@ -407,7 +415,25 @@ export default function Home() {
             {/* Info Section */}
             <div className="bg-slate-800 border border-slate-700 rounded-b-lg p-6 mt-4">
               <h2 className="text-2xl font-bold text-white mb-2">{selectedCharacter.name}</h2>
-              <p className="text-slate-400 text-lg">{selectedCharacter.code}</p>
+              <p className="text-slate-400 text-lg mb-6">{selectedCharacter.code}</p>
+              
+              {/* Tier Buttons */}
+              <div className="flex gap-3 justify-center flex-wrap">
+                {tiers.map(tier => (
+                  <button
+                    key={tier}
+                    onClick={() => handleAddToTierFromModal(tier)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white transition-all hover:scale-110 hover:shadow-lg active:scale-95"
+                    style={{
+                      backgroundColor: TIER_COLORS[tier].bg,
+                      color: tier === 'A' ? '#000' : '#fff'
+                    }}
+                  >
+                    <Check size={18} />
+                    {tier}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
