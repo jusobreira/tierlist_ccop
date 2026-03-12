@@ -162,10 +162,15 @@ export default function Home() {
     if (!tierListElement) return;
 
     try {
+      // Pequeno delay para garantir que tudo esteja renderizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Capturar a imagem da tierlist
       const dataUrl = await toPng(tierListElement, {
         cacheBust: true,
         pixelRatio: 2, // Melhor qualidade
+        skipFonts: true, // Evita problemas com fontes externas
+        includeQueryParams: true,
       });
 
       // Criar link de download
@@ -177,6 +182,8 @@ export default function Home() {
       document.body.removeChild(link);
     } catch (err) {
       console.error('Erro ao gerar imagem:', err);
+      // Fallback simples se falhar
+      alert('Erro ao gerar o download. Por favor, tente novamente.');
     }
   };
 
@@ -316,6 +323,7 @@ export default function Home() {
                             <img
                               src={character!.image}
                               alt={character!.name}
+                              crossOrigin="anonymous"
                               className="w-full h-full object-contain"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src =
