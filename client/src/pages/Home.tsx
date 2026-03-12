@@ -156,24 +156,13 @@ export default function Home() {
     if (!tierListElement) return;
 
     try {
-      // Usar html2canvas com configurações otimizadas
+      // Usar html2canvas com allowTaint: true para permitir imagens de outros domínios
       const canvas = await html2canvas(tierListElement, {
         scale: 2,
         useCORS: true,
-        allowTaint: false,
+        allowTaint: true,
         backgroundColor: '#1e293b',
         logging: false,
-        onclone: (clonedDoc) => {
-          const images = clonedDoc.querySelectorAll('img');
-          images.forEach(img => {
-            const originalUrl = img.src;
-            if (originalUrl.startsWith('http') && !originalUrl.includes(window.location.origin)) {
-              // Usar o proxy weserv.nl para contornar o CORS, similar ao repositório cafecomonepiece_ldb
-              const sanitizedUrl = originalUrl.replace(/^https?:\/\//, '');
-              img.src = `https://images.weserv.nl/?url=${encodeURIComponent(sanitizedUrl)}`;
-            }
-          });
-        }
       });
 
       canvas.toBlob((blob) => {
