@@ -86,7 +86,10 @@ export default function Home() {
   };
 
   const handleDragEnd = () => {
-    dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
+    // Usar um pequeno delay para garantir que o drop foi processado
+    setTimeout(() => {
+      dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
+    }, 100);
   };
 
   const handleMouseDown = () => {
@@ -120,6 +123,9 @@ export default function Home() {
     const filtered = tierList.filter(item => item.characterId !== draggedCharacter);
     setTierList([...filtered, { characterId: draggedCharacter, tier }]);
     setDraggedCharacter(null);
+    
+    // Resetar o estado de drag imediatamente após o drop
+    dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
   };
 
   const handleRemoveFromTier = (characterId: string) => {
@@ -131,8 +137,10 @@ export default function Home() {
   };
 
   const handleCardClick = (e: React.MouseEvent, characterId: string) => {
-    // Verificar se foi um clique simples (não drag)
-    const clickDuration = Date.now();
+    // Evitar abrir modal se estiver arrastando
+    if (dragStateRef.current.isDragging) return;
+    
+    // Abrir modal com um pequeno delay para garantir que não é um drag
     setTimeout(() => {
       if (!dragStateRef.current.isDragging) {
         setSelectedCharacterId(characterId);
@@ -186,7 +194,19 @@ export default function Home() {
       </div>
 
       {/* Main Content - Full Width */}
-      <div className="flex-1 flex gap-0 relative overflow-hidden" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+      <div 
+        className="flex-1 flex gap-0 relative overflow-hidden" 
+        onMouseMove={handleMouseMove} 
+        onMouseUp={() => {
+          handleMouseUp();
+          // Garantir que o estado de drag seja resetado ao soltar o mouse
+          dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
+        }} 
+        onMouseLeave={() => {
+          handleMouseUp();
+          dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
+        }}
+      >
         {/* Tier List */}
         <div 
           id="tier-list-container"
