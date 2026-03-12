@@ -3,6 +3,7 @@ import { CHARACTERS, TIER_COLORS, TierKey } from '@/lib/characters';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, Download, RotateCcw, Search, Check } from 'lucide-react';
+import { toPng } from 'html-to-image';
 
 interface TierListItem {
   characterId: string;
@@ -156,6 +157,29 @@ export default function Home() {
     setSelectedCharacterId(null);
   };
 
+  const handleDownloadTierList = async () => {
+    const tierListElement = document.getElementById('tier-list-card');
+    if (!tierListElement) return;
+
+    try {
+      // Capturar a imagem da tierlist
+      const dataUrl = await toPng(tierListElement, {
+        cacheBust: true,
+        pixelRatio: 2, // Melhor qualidade
+      });
+
+      // Criar link de download
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `tier-list-${new Date().getTime()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Erro ao gerar imagem:', err);
+    }
+  };
+
   const getCharactersByTier = (tier: TierKey) => {
     return tierList
       .filter(item => item.tier === tier)
@@ -213,18 +237,29 @@ export default function Home() {
           style={{ width: `${tierListWidth}%`, transition: isResizing ? 'none' : 'width 0.2s' }}
           className={`flex flex-col overflow-hidden ${isResizing ? 'no-select' : ''}`}
         >
-          <Card className="p-6 bg-slate-800 border-slate-700 shadow-xl m-4 flex-1 flex flex-col overflow-hidden">
+          <Card id="tier-list-card" className="p-6 bg-slate-800 border-slate-700 shadow-xl m-4 flex-1 flex flex-col overflow-hidden">
             <div className="flex justify-between items-center mb-6 flex-shrink-0">
               <h2 className="text-2xl font-bold text-white">Your Tier List</h2>
-              <Button
-                onClick={handleReset}
-                variant="outline"
-                size="sm"
-                className="text-slate-300 border-slate-600 hover:bg-slate-700"
-              >
-                <RotateCcw size={16} className="mr-2" />
-                Reset
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleDownloadTierList}
+                  variant="outline"
+                  size="sm"
+                  className="text-slate-300 border-slate-600 hover:bg-slate-700"
+                >
+                  <Download size={16} className="mr-2" />
+                  PNG
+                </Button>
+                <Button
+                  onClick={handleReset}
+                  variant="outline"
+                  size="sm"
+                  className="text-slate-300 border-slate-600 hover:bg-slate-700"
+                >
+                  <RotateCcw size={16} className="mr-2" />
+                  Reset
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-4 overflow-y-auto flex-1">
