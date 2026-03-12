@@ -85,6 +85,10 @@ export default function Home() {
     setDraggedCharacter(characterId);
   };
 
+  const handleDragEnd = () => {
+    dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
+  };
+
   const handleMouseDown = () => {
     setIsResizing(true);
   };
@@ -250,6 +254,7 @@ export default function Home() {
                           className="relative group flex-shrink-0 w-full cursor-pointer"
                           draggable
                           onDragStart={(e) => handleDragStart(e, character!.id)}
+                          onDragEnd={handleDragEnd}
                           onClick={(e) => handleCardClick(e, character!.id)}
                         >
                           <div className="relative w-full h-[140px] overflow-hidden rounded-md border-2 border-slate-600 hover:border-slate-400 transition-all cursor-grab active:cursor-grabbing shadow-lg hover:shadow-xl hover:scale-105">
@@ -331,6 +336,7 @@ export default function Home() {
                   key={character.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, character.id)}
+                  onDragEnd={handleDragEnd}
                   onClick={(e) => handleCardClick(e, character.id)}
                   className="p-1 bg-slate-700 hover:bg-slate-600 rounded cursor-grab active:cursor-grabbing transition-colors border border-slate-600 hover:border-slate-500 hover:scale-105 hover:shadow-lg"
                 >
