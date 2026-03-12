@@ -151,66 +151,29 @@ export default function Home() {
     setSelectedCharacterId(null);
   };
 
-  // Função para converter imagem para Base64
-  const imageToBase64 = (url: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png'));
-        } else {
-          reject(new Error('Falha ao obter contexto do canvas'));
-        }
-      };
-      img.onerror = () => reject(new Error(`Falha ao carregar imagem: ${url}`));
-      img.src = url;
-    });
-  };
-
-  // Função para converter todas as imagens do elemento para Base64
-  const convertImagesToBase64 = async (element: HTMLElement): Promise<void> => {
-    const images = element.querySelectorAll('img');
-    const promises: Promise<void>[] = [];
-
-    images.forEach((img) => {
-      const promise = imageToBase64(img.src)
-        .then((base64) => {
-          img.src = base64;
-        })
-        .catch((err) => {
-          console.warn('Erro ao converter imagem para Base64:', err);
-          // Continuar mesmo se uma imagem falhar
-        });
-      promises.push(promise);
-    });
-
-    await Promise.all(promises);
-  };
-
   const handleDownloadTierList = async () => {
     const tierListElement = document.getElementById('tier-list-card');
     if (!tierListElement) return;
 
     try {
-      // Clonar o elemento para não afetar a página
-      const clonedElement = tierListElement.cloneNode(true) as HTMLElement;
-      
-      // Converter todas as imagens para Base64 no clone
-      await convertImagesToBase64(clonedElement);
-
-      // Usar html2canvas no elemento clonado com as imagens em Base64
-      const canvas = await html2canvas(clonedElement, {
+      // Usar html2canvas com configurações otimizadas
+      const canvas = await html2canvas(tierListElement, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: '#1e293b',
         logging: false,
+        onclone: (clonedDoc) => {
+          const images = clonedDoc.querySelectorAll('img');
+          images.forEach(img => {
+            const originalUrl = img.src;
+            if (originalUrl.startsWith('http') && !originalUrl.includes(window.location.origin)) {
+              // Usar o proxy weserv.nl para contornar o CORS, similar ao repositório cafecomonepiece_ldb
+              const sanitizedUrl = originalUrl.replace(/^https?:\/\//, '');
+              img.src = `https://images.weserv.nl/?url=${encodeURIComponent(sanitizedUrl)}`;
+            }
+          });
+        }
       });
 
       canvas.toBlob((blob) => {
