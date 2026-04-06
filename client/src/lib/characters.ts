@@ -99,20 +99,20 @@ export const CHARACTERS: Character[] = [
   { id: "op14-060", code: "OP14-060", name: "Donquixote Doflamingo", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP14/OP14-060_EN.webp", color: "#9D4EDD" },
   { id: "op14-079", code: "OP14-079", name: "Crocodile", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP14/OP14-079_EN.webp", color: "#D4AF37" },
   { id: "op14-080", code: "OP14-080", name: "Gecko Moria", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP14/OP14-080_EN.webp", color: "#1A3A52" },
-  { id: "op15-001", code: "OP15-001", name: "Don Krieg", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-001_JP.webp", color: "#1A3A52" },
-  { id: "op15-002", code: "OP15-002", name: "Lucy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-002_JP.webp", color: "#1A3A52" },
-  { id: "op15-022", code: "OP15-022", name: "Brook", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-022_JP.webp", color: "#1A3A52" },
-  { id: "op15-039", code: "OP15-039", name: "Rebecca", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-039_JP.webp", color: "#1A3A52" },
-  { id: "op15-058", code: "OP15-058", name: "Enel", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-058_JP.webp", color: "#1A3A52" },
-  { id: "op15-098", code: "OP15-098", name: "Monkey.D.Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-098_JP.webp", color: "#1A3A52" },
+  { id: "op15-001", code: "OP15-001", name: "Don Krieg", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-001_EN.webp", color: "#1A3A52" },
+  { id: "op15-002", code: "OP15-002", name: "Lucy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-002_EN.webp", color: "#1A3A52" },
+  { id: "op15-022", code: "OP15-022", name: "Brook", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-022_EN.webp", color: "#1A3A52" },
+  { id: "op15-039", code: "OP15-039", name: "Rebecca", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-039_EN.webp", color: "#1A3A52" },
+  { id: "op15-058", code: "OP15-058", name: "Enel", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-058_EN.webp", color: "#1A3A52" },
+  { id: "op15-098", code: "OP15-098", name: "Monkey.D.Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-098_EN.webp", color: "#1A3A52" },
 
   // EB Series
   { id: "eb01-001", code: "EB01-001", name: "Kouzuki Oden", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB01/EB01-001_EN.webp", color: "#FF6B35" },
   { id: "eb01-021", code: "EB01-021", name: "Hannyabal", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB01/EB01-021_EN.webp", color: "#9D4EDD" },
   { id: "eb01-040", code: "EB01-040", name: "Kyros", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB01/EB01-040_EN.webp", color: "#F7931E" },
   { id: "eb02-010", code: "EB02-010", name: "Monkey.D.Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB02/EB02-010_EN.webp", color: "#FF6B35" },
-  { id: "eb03-001", code: "EB03-001", name: "Nefertari Vivi", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB03/EB03-001_JP.webp", color: "#00B4D8" },
-  { id: "eb04-001", code: "EB04-001", name: "Jewelry Bonney", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB04/EB04-001_JP.webp", color: "#00B4D8" },
+  { id: "eb03-001", code: "EB03-001", name: "Nefertari Vivi", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB03/EB03-001_EN.webp", color: "#00B4D8" },
+  { id: "eb04-001", code: "EB04-001", name: "Jewelry Bonney", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB04/EB04-001_EN.webp", color: "#00B4D8" },
 
   // ST Series
   { id: "st01-001", code: "ST01-001", name: "Monkey D Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST01/ST01-001_EN.webp", color: "#FF6B35" },
@@ -143,7 +143,6 @@ export const CHARACTERS: Character[] = [
   { id: "p-076", code: "P-076", name: "Sakazuki", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/P/P-076_EN.webp", color: "#FF6B35" },
   { id: "p-086", code: "P-086", name: "Trafalgar Law", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/P/P-086_EN.webp", color: "#9D4EDD" },
   { id: "p-117", code: "P-117", name: "Nami", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/P/P-117_EN.webp", color: "#FF6B35" },
-  { id: "others", code: "others-otros", name: "Outros", image: "https://static.wixstatic.com/media/858f16_188302edd0ba41b085ce526a30c792fe~mv2.png", color: "#FF6B35" },
 ];
 
 export const TIER_COLORS = {
