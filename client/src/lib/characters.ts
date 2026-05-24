@@ -105,12 +105,12 @@ export const CHARACTERS: Character[] = [
   { id: "op15-039", code: "OP15-039", name: "Rebecca", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-039_EN.webp", color: "#1A3A52" },
   { id: "op15-058", code: "OP15-058", name: "Enel", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-058_EN.webp", color: "#1A3A52" },
   { id: "op15-098", code: "OP15-098", name: "Monkey.D.Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP15/OP15-098_EN.webp", color: "#1A3A52" },
-  { id: "op16-001", code: "OP16-001", name: "Portgas.D.Ace", image: "https://optcgleaks.com/4e4a73cd-ed84-49b9-8612-e6f6c2fd0205", color: "#1A3A52" },
-  { id: "op16-022", code: "OP16-022", name: "Monkey.D.Luffy", image: "https://optcgleaks.com/c9b9d3ae-7388-418a-8cd8-fe41ec0df255", color: "#1A3A52" },
-  { id: "op16-041", code: "OP16-041", name: "Buggy", image: "https://optcgleaks.com/4f1a32d6-59f2-4cb6-875f-172d64de1ea7", color: "#1A3A52" },
-  { id: "op16-060", code: "OP16-060", name: "Sengoku", image: "https://optcgleaks.com/a83b0409-dffa-45fc-9fe3-939951ead515", color: "#1A3A52" },
-  { id: "op16-079", code: "OP16-079", name: "Yamato", image: "https://optcgleaks.com/3991c108-9f61-4c76-abb3-bfa5315af22d", color: "#1A3A52" },
-  { id: "op16-080", code: "OP16-080", name: "Marshall.D.Teach", image: "https://optcgleaks.com/46ea835d-2e7b-4221-9d52-f6a785d17f3c", color: "#1A3A52" },
+  { id: "op16-001", code: "OP16-001", name: "Portgas.D.Ace", image: "https://static.wixstatic.com/media/858f16_097ad8e77ab54674b55a7ed3a875574d~mv2.jpg", color: "#1A3A52" },
+  { id: "op16-022", code: "OP16-022", name: "Monkey.D.Luffy", image: "https://static.wixstatic.com/media/858f16_ff50a7baea494699b0df67c84ff8c5f4~mv2.jpg", color: "#1A3A52" },
+  { id: "op16-041", code: "OP16-041", name: "Buggy", image: "https://static.wixstatic.com/media/858f16_3b4bfa439a9c44509dcdc92b23726154~mv2.webp", color: "#1A3A52" },
+  { id: "op16-060", code: "OP16-060", name: "Sengoku", image: "https://static.wixstatic.com/media/858f16_1f9b315d45e84542b5751c9388416c3b~mv2.jpg", color: "#1A3A52" },
+  { id: "op16-079", code: "OP16-079", name: "Yamato", image: "https://static.wixstatic.com/media/858f16_f478645d0e774d54a484626e9b9197f1~mv2.webp", color: "#1A3A52" },
+  { id: "op16-080", code: "OP16-080", name: "Marshall.D.Teach", image: "https://static.wixstatic.com/media/858f16_2ae221c8ebdb4e9b9c1b9780ba598c30~mv2.jpg", color: "#1A3A52" },
 
   // EB Series
   { id: "eb01-001", code: "EB01-001", name: "Kouzuki Oden", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB01/EB01-001_EN.webp", color: "#FF6B35" },
