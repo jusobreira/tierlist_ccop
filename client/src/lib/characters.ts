@@ -92,14 +92,6 @@ export const CHARACTERS: Character[] = [
   { id: "eb04-001", code: "EB04-001", name: "Jewelry Bonney", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB04/EB04-001_EN.webp", color: "#00B4D8" },
 
   // ST Series
-  { id: "st01-001", code: "ST01-001", name: "Monkey D Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST01/ST01-001_EN.webp", color: "#FF6B35" },
-  { id: "st02-001", code: "ST02-001", name: "Eustass Captain Kid", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST02/ST02-001_EN.webp", color: "#1A3A52" },
-  { id: "st03-001", code: "ST03-001", name: "Crocodile", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST03/ST03-001_EN.webp", color: "#00B4D8" },
-  { id: "st04-001", code: "ST04-001", name: "Kaido", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST04/ST04-001_EN.webp", color: "#9D4EDD" },
-  { id: "st05-001", code: "ST05-001", name: "Shanks", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST05/ST05-001_EN.webp", color: "#9D4EDD" },
-  { id: "st06-001", code: "ST06-001", name: "Sakazuki", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST06/ST06-001_EN.webp", color: "#1A3A52" },
-  { id: "st07-001", code: "ST07-001", name: "Charlotte Linlin", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST07/ST07-001_EN.webp", color: "#F7931E" },
-  { id: "st08-001", code: "ST08-001", name: "Monkey D Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST08/ST08-001_EN.webp", color: "#1A3A52" },
   { id: "st09-001", code: "ST09-001", name: "Yamato", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST09/ST09-001_EN.webp", color: "#F7931E" },
   { id: "st10-001", code: "ST10-001", name: "Trafalgar Law", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST10/ST10-001_EN.webp", color: "#8B0000" },
   { id: "st10-002", code: "ST10-002", name: "Monkey D Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST10/ST10-002_EN.webp", color: "#8B0000" },
@@ -152,6 +144,14 @@ export const CHARACTERS: Character[] = [
   { id: "op04-039", code: "OP04-039", name: "Rebecca", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP04/OP04-039_EN.webp", color: "#F7931E" },
   { id: "op04-040", code: "OP04-040", name: "Queen", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP04/OP04-040_EN.webp", color: "#00B4D8" },
   { id: "op04-058", code: "OP04-058", name: "Crocodile", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP04/OP04-058_EN.webp", color: "#9D4EDD" },
+  { id: "st01-001", code: "ST01-001", name: "Monkey D Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST01/ST01-001_EN.webp", color: "#FF6B35" },
+  { id: "st02-001", code: "ST02-001", name: "Eustass Captain Kid", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST02/ST02-001_EN.webp", color: "#1A3A52" },
+  { id: "st03-001", code: "ST03-001", name: "Crocodile", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST03/ST03-001_EN.webp", color: "#00B4D8" },
+  { id: "st04-001", code: "ST04-001", name: "Kaido", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST04/ST04-001_EN.webp", color: "#9D4EDD" },
+  { id: "st05-001", code: "ST05-001", name: "Shanks", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST05/ST05-001_EN.webp", color: "#9D4EDD" },
+  { id: "st06-001", code: "ST06-001", name: "Sakazuki", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST06/ST06-001_EN.webp", color: "#1A3A52" },
+  { id: "st07-001", code: "ST07-001", name: "Charlotte Linlin", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST07/ST07-001_EN.webp", color: "#F7931E" },
+  { id: "st08-001", code: "ST08-001", name: "Monkey D Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST08/ST08-001_EN.webp", color: "#1A3A52" },
 ];
 
 export const TIER_COLORS = {
