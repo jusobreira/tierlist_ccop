@@ -96,6 +96,7 @@ export const CHARACTERS: Character[] = [
   { id: "eb02-010", code: "EB02-010", name: "Monkey.D.Luffy", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB02/EB02-010_EN.webp", color: "#FF6B35" },
   { id: "eb03-001", code: "EB03-001", name: "Nefertari Vivi", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB03/EB03-001_EN.webp", color: "#00B4D8" },
   { id: "eb04-001", code: "EB04-001", name: "Jewelry Bonney", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB04/EB04-001_EN.webp", color: "#00B4D8" },
+  { id: "eb05-001", code: "EB05-001", name: "Nico Robin", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/EB05/EB05-010_EN.webp", color: "#00B4D8" },
 
   // ST Series
   { id: "st09-001", code: "ST09-001", name: "Yamato", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/ST09/ST09-001_EN.webp", color: "#F7931E" },
