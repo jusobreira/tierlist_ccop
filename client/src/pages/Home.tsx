@@ -8,6 +8,9 @@ import { toPng } from 'html-to-image';
 // Cores sugeridas para novas tiers (ciclo)
 const NEW_TIER_COLORS = ['#C77DFF', '#FF9F43', '#2DD4BF', '#F472B6', '#94A3B8', '#A3E635'];
 
+// Coleção da carta = trecho do código antes do hífen (OP01-001 -> OP01; P-001 -> P)
+const getCollection = (code: string) => code.split('-')[0].toUpperCase();
+
 // Escolhe texto preto ou branco conforme a luminosidade da cor de fundo
 const getReadableTextColor = (hex: string): string => {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex);
@@ -56,6 +59,7 @@ export default function Home() {
     }))
   );
   const [editingTier, setEditingTier] = useState<string | null>(null);
+  const [selectedCollections, setSelectedCollections] = useState<Set<string>>(new Set()); // vazio = todas
   const [draggedTierId, setDraggedTierId] = useState<string | null>(null);
   const [dragOverTierId, setDragOverTierId] = useState<string | null>(null);
   const [tierListWidth, setTierListWidth] = useState(65);
@@ -348,11 +352,28 @@ export default function Home() {
   }, [tierList]);
 
   const filteredCharacters = useMemo(() => {
-    return unrankedCharacters.filter(char => 
+    return unrankedCharacters
+      .filter(char => selectedCollections.size === 0 || selectedCollections.has(getCollection(char.code)))
+      .filter(char => 
       char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       char.code.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [unrankedCharacters, searchQuery]);
+  }, [unrankedCharacters, searchQuery, selectedCollections]);
+
+  // Coleções detectadas automaticamente a partir dos códigos das cartas
+  const collections = useMemo(() => {
+    const set = new Set(CHARACTERS.map(c => getCollection(c.code)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, []);
+
+  const toggleCollection = (collection: string) => {
+    setSelectedCollections(prev => {
+      const next = new Set(prev);
+      if (next.has(collection)) next.delete(collection);
+      else next.add(collection);
+      return next;
+    });
+  };
 
   const selectedCharacter = CHARACTERS.find(c => c.id === selectedCharacterId);
 
@@ -585,6 +606,41 @@ export default function Home() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            {/* Filtro de coleções */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-slate-400">
+                  Coleções {selectedCollections.size > 0 ? `(${selectedCollections.size} selecionada${selectedCollections.size > 1 ? 's' : ''})` : '(todas)'}
+                </span>
+                {selectedCollections.size > 0 && (
+                  <button
+                    onClick={() => setSelectedCollections(new Set())}
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    Limpar filtro
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                {collections.map(collection => {
+                  const active = selectedCollections.has(collection);
+                  return (
+                    <button
+                      key={collection}
+                      onClick={() => toggleCollection(collection)}
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? 'bg-blue-600 border-blue-500 text-white'
+                          : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      {collection}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div
