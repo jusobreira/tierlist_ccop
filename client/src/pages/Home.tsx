@@ -1,9 +1,24 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { CHARACTERS, TIER_COLORS, TierKey } from '@/lib/characters';
+import { CHARACTERS, TIER_COLORS } from '@/lib/characters';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, Download, RotateCcw, Search, Check, Pencil } from 'lucide-react';
+import { X, Download, RotateCcw, Search, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
+
+// Cores sugeridas para novas tiers (ciclo)
+const NEW_TIER_COLORS = ['#C77DFF', '#FF9F43', '#2DD4BF', '#F472B6', '#94A3B8', '#A3E635'];
+
+// Escolhe texto preto ou branco conforme a luminosidade da cor de fundo
+const getReadableTextColor = (hex: string): string => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return '#fff';
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? '#000' : '#fff';
+};
 
 // FUNÇÃO AUXILIAR PARA O PROXY (Essencial para o download não sair em branco)
 const getProxiedImageUrl = (url: string) => {
@@ -12,13 +27,15 @@ const getProxiedImageUrl = (url: string) => {
   return `https://images.weserv.nl/?url=${encodeURIComponent(sanitizedUrl)}&output=webp`;
 };
 
-interface TierListItem {
-  characterId: string;
-  tier: TierKey;
+interface Tier {
+  id: string;
+  label: string;
+  color: string;
 }
 
-interface TierLabel {
-  [key: string]: string;
+interface TierListItem {
+  characterId: string;
+  tier: string; // id da tier
 }
 
 interface DragState {
@@ -31,14 +48,14 @@ export default function Home() {
   const [tierList, setTierList] = useState<TierListItem[]>([]);
   const [draggedCharacter, setDraggedCharacter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [tierLabels, setTierLabels] = useState<TierLabel>({
-    S: 'S',
-    A: 'A',
-    B: 'B',
-    C: 'C',
-    F: 'F',
-  });
-  const [editingTier, setEditingTier] = useState<TierKey | null>(null);
+  const [tiers, setTiers] = useState<Tier[]>(
+    (Object.keys(TIER_COLORS) as (keyof typeof TIER_COLORS)[]).map(key => ({
+      id: key,
+      label: key,
+      color: TIER_COLORS[key].bg,
+    }))
+  );
+  const [editingTier, setEditingTier] = useState<string | null>(null);
   const [tierListWidth, setTierListWidth] = useState(65);
   const [isResizing, setIsResizing] = useState(false);
   const [tierColumnsCount, setTierColumnsCount] = useState(2);
@@ -106,7 +123,28 @@ export default function Home() {
 
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
-  const handleDropOnTier = (tier: TierKey) => {
+  const updateTierLabel = (id: string, label: string) => {
+    setTiers(prev => prev.map(t => (t.id === id ? { ...t, label } : t)));
+  };
+
+  const updateTierColor = (id: string, color: string) => {
+    setTiers(prev => prev.map(t => (t.id === id ? { ...t, color } : t)));
+  };
+
+  const handleAddTier = () => {
+    setTiers(prev => {
+      const color = NEW_TIER_COLORS[prev.length % NEW_TIER_COLORS.length];
+      return [...prev, { id: `tier-${Date.now()}`, label: `Tier ${prev.length + 1}`, color }];
+    });
+  };
+
+  // Remove a tier; os personagens dela voltam para "Unranked"
+  const handleRemoveTier = (id: string) => {
+    setTiers(prev => prev.filter(t => t.id !== id));
+    setTierList(prev => prev.filter(item => item.tier !== id));
+  };
+
+  const handleDropOnTier = (tier: string) => {
     if (!draggedCharacter) return;
     const filtered = tierList.filter(item => item.characterId !== draggedCharacter);
     setTierList([...filtered, { characterId: draggedCharacter, tier }]);
@@ -129,7 +167,7 @@ export default function Home() {
     }, 50);
   };
 
-  const handleAddToTierFromModal = (tier: TierKey) => {
+  const handleAddToTierFromModal = (tier: string) => {
     if (!selectedCharacterId) return;
     const filtered = tierList.filter(item => item.characterId !== selectedCharacterId);
     setTierList([...filtered, { characterId: selectedCharacterId, tier }]);
@@ -234,7 +272,11 @@ export default function Home() {
         backgroundColor: '#1e293b',
         filter: (node: Node) => {
           if (!(node instanceof HTMLElement)) return true;
-          return !node.classList.contains('export-actions') && !node.classList.contains('edit-name-btn');
+          return (
+            !node.classList.contains('export-actions') &&
+            !node.classList.contains('edit-name-btn') &&
+            !node.classList.contains('tier-controls')
+          );
         }
       });
 
@@ -256,7 +298,7 @@ export default function Home() {
   };
 
 
-  const getCharactersByTier = (tier: TierKey) => {
+  const getCharactersByTier = (tier: string) => {
     return tierList
       .filter(item => item.tier === tier)
       .map(item => CHARACTERS.find(c => c.id === item.characterId))
@@ -275,13 +317,12 @@ export default function Home() {
   }, [unrankedCharacters, searchQuery]);
 
   const selectedCharacter = CHARACTERS.find(c => c.id === selectedCharacterId);
-  const tiers: TierKey[] = ['S', 'A', 'B', 'C', 'F'];
 
   // Calcula largura da coluna de labels baseado no maior texto (max 20 chars por linha)
   const tierLabelWidth = useMemo(() => {
-    const maxLen = Math.max(...Object.values(tierLabels).map(l => Math.min(l.length, 20)));
+    const maxLen = Math.max(1, ...tiers.map(t => Math.min(t.label.length, 20)));
     return Math.max(5, maxLen * 0.65 + 1.5);
-  }, [tierLabels]);
+  }, [tiers]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
@@ -341,38 +382,67 @@ export default function Home() {
 
               <div className="space-y-4 overflow-y-auto flex-1">
                 {tiers.map(tier => (
-                  <div key={tier} className="flex gap-4">
+                  <div key={tier.id} className="flex gap-4">
                     <div
-                      className="flex items-center justify-center rounded font-bold text-white flex-shrink-0 relative group cursor-pointer p-2 text-center"
+                      className="flex items-center justify-center rounded font-bold flex-shrink-0 relative group cursor-pointer p-2 text-center"
                       style={{
-                        backgroundColor: TIER_COLORS[tier].bg,
+                        backgroundColor: tier.color,
+                        color: getReadableTextColor(tier.color),
                         width: `${tierLabelWidth}rem`,
-                        fontSize: tierLabels[tier].length > 5 ? '0.75rem' : '1.25rem',
+                        fontSize: tier.label.length > 5 ? '0.75rem' : '1.25rem',
                         lineHeight: '1.2',
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',
                       }}
-                      onClick={() => setEditingTier(tier)}
+                      onClick={() => setEditingTier(tier.id)}
                     >
-                      {editingTier === tier ? (
+                      {editingTier === tier.id ? (
                         <textarea
                           autoFocus
-                          value={tierLabels[tier]}
-                          onChange={(e) => setTierLabels({ ...tierLabels, [tier]: e.target.value })}
+                          value={tier.label}
+                          onChange={(e) => updateTierLabel(tier.id, e.target.value)}
                           onBlur={() => setEditingTier(null)}
                           onKeyDown={(e) => e.key === 'Enter' && setEditingTier(null)}
                           className="w-full text-center bg-slate-900 text-white border border-slate-500 rounded px-1 py-1 resize-none"
                           maxLength={100}
-                          rows={Math.min(4, Math.ceil(tierLabels[tier].length / 20) || 1)}
+                          rows={Math.min(4, Math.ceil(tier.label.length / 20) || 1)}
                         />
                       ) : (
-                        <span className="block overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' }}>{tierLabels[tier]}</span>
+                        <span className="block overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' }}>{tier.label}</span>
                       )}
+
+                      {/* Controles da tier (não aparecem no PNG exportado) */}
+                      <div
+                        className="tier-controls absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <label
+                          title="Mudar cor"
+                          className="w-5 h-5 rounded-full border-2 border-white/80 overflow-hidden cursor-pointer shadow"
+                          style={{ backgroundColor: tier.color }}
+                        >
+                          <input
+                            type="color"
+                            value={tier.color}
+                            onChange={(e) => updateTierColor(tier.id, e.target.value)}
+                            className="opacity-0 w-full h-full cursor-pointer"
+                          />
+                        </label>
+                        {tiers.length > 1 && (
+                          <button
+                            title="Remover tier"
+                            onClick={() => handleRemoveTier(tier.id)}
+                            className="w-5 h-5 rounded-full bg-slate-900/80 text-white flex items-center justify-center hover:bg-red-600"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div
                       onDragOver={handleDragOver}
-                      onDrop={() => handleDropOnTier(tier)}
+                      onDrop={() => handleDropOnTier(tier.id)}
                       className="flex-1 bg-slate-700 rounded-lg border-2 border-dashed border-slate-600 p-3 min-h-[140px] flex flex-wrap gap-2 items-start content-start"
                       style={{
                         display: 'grid',
@@ -380,7 +450,7 @@ export default function Home() {
                         alignContent: 'start'
                       }}
                     >
-                      {getCharactersByTier(tier).map(character => (
+                      {getCharactersByTier(tier.id).map(character => (
                         <div
                           key={character!.id}
                           className="relative group flex-shrink-0 w-full cursor-pointer"
@@ -408,18 +478,29 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+
+                {/* Adicionar nova tier (não aparece no PNG exportado) */}
+                <button
+                  onClick={handleAddTier}
+                  className="tier-controls w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-600 py-3 text-slate-400 hover:text-white hover:border-slate-400 transition-colors"
+                >
+                  <Plus size={18} /> Adicionar tier
+                </button>
               </div>
 
               {/* Stats */}
               {tierList.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-slate-700">
-                  <div className="grid grid-cols-5 gap-4 text-center">
+                  <div
+                    className="grid gap-4 text-center"
+                    style={{ gridTemplateColumns: `repeat(${tiers.length}, minmax(0, 1fr))` }}
+                  >
                     {tiers.map(tier => (
-                      <div key={tier}>
-                        <div className="text-lg font-bold text-white mb-1" style={{ color: TIER_COLORS[tier].bg }}>
-                          {getCharactersByTier(tier).length}
+                      <div key={tier.id}>
+                        <div className="text-lg font-bold mb-1" style={{ color: tier.color }}>
+                          {getCharactersByTier(tier.id).length}
                         </div>
-                        <div className="text-xs text-slate-400">{tierLabels[tier]}</div>
+                        <div className="text-xs text-slate-400 break-words">{tier.label}</div>
                       </div>
                     ))}
                   </div>
@@ -494,15 +575,16 @@ export default function Home() {
                 className="w-full h-full object-contain bg-slate-900"
               />
             </div>
-            <div className="grid grid-cols-5 gap-3 w-full">
+            <div className="flex flex-wrap justify-center gap-3 w-full">
               {tiers.map(tier => (
                 <button
-                  key={tier}
-                  onClick={() => handleAddToTierFromModal(tier)}
-                  className="aspect-square flex items-center justify-center rounded-lg font-bold text-white text-xl transition-all hover:scale-110 active:scale-95"
-                  style={{ backgroundColor: TIER_COLORS[tier].bg, color: tier === 'A' ? '#000' : '#fff' }}
+                  key={tier.id}
+                  onClick={() => handleAddToTierFromModal(tier.id)}
+                  title={tier.label}
+                  className="w-14 h-14 flex items-center justify-center rounded-lg font-bold text-sm transition-all hover:scale-110 active:scale-95 p-1 overflow-hidden break-words leading-tight"
+                  style={{ backgroundColor: tier.color, color: getReadableTextColor(tier.color) }}
                 >
-                  {tier}
+                  {tier.label}
                 </button>
               ))}
             </div>
