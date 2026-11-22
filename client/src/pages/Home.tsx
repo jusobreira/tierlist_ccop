@@ -11,6 +11,12 @@ const NEW_TIER_COLORS = ['#C77DFF', '#FF9F43', '#2DD4BF', '#F472B6', '#94A3B8', 
 // Coleção da carta = trecho do código antes do hífen (OP01-001 -> OP01; P-001 -> P)
 const getCollection = (code: string) => code.split('-')[0].toUpperCase();
 
+// Coleções rotacionadas (fora do formato): OP01–OP04 e ST01–ST09
+const ROTATED_COLLECTIONS = [
+  ...['01', '02', '03', '04'].map(n => `OP${n}`),
+  ...['01', '02', '03', '04', '05', '06', '07', '08', '09'].map(n => `ST${n}`),
+];
+
 // Escolhe texto preto ou branco conforme a luminosidade da cor de fundo
 const getReadableTextColor = (hex: string): string => {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex);
@@ -617,16 +623,31 @@ export default function Home() {
                 <span className="text-xs text-slate-400">
                   Coleções ({selectedCollections.size} de {collections.length})
                 </span>
-                <button
-                  onClick={() =>
-                    setSelectedCollections(
-                      selectedCollections.size === collections.length ? new Set() : new Set(collections)
-                    )
-                  }
-                  className="text-xs text-blue-400 hover:text-blue-300"
-                >
-                  {selectedCollections.size === collections.length ? 'Desmarcar todas' : 'Selecionar todas'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() =>
+                      setSelectedCollections(prev => {
+                        const next = new Set(prev);
+                        ROTATED_COLLECTIONS.forEach(c => next.delete(c));
+                        return next;
+                      })
+                    }
+                    title="Desmarca OP01–OP04 e ST01–ST09"
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    Desmarcar rotacionadas
+                  </button>
+                  <button
+                    onClick={() =>
+                      setSelectedCollections(
+                        selectedCollections.size === collections.length ? new Set() : new Set(collections)
+                      )
+                    }
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    {selectedCollections.size === collections.length ? 'Desmarcar todas' : 'Selecionar todas'}
+                  </button>
+                </div>
               </div>
               <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                 {collections.map(collection => {
