@@ -59,7 +59,10 @@ export default function Home() {
     }))
   );
   const [editingTier, setEditingTier] = useState<string | null>(null);
-  const [selectedCollections, setSelectedCollections] = useState<Set<string>>(new Set()); // vazio = todas
+  // Por padrão, todas as coleções começam selecionadas
+  const [selectedCollections, setSelectedCollections] = useState<Set<string>>(
+    () => new Set(CHARACTERS.map(c => getCollection(c.code)))
+  );
   const [draggedTierId, setDraggedTierId] = useState<string | null>(null);
   const [dragOverTierId, setDragOverTierId] = useState<string | null>(null);
   const [tierListWidth, setTierListWidth] = useState(65);
@@ -353,7 +356,7 @@ export default function Home() {
 
   const filteredCharacters = useMemo(() => {
     return unrankedCharacters
-      .filter(char => selectedCollections.size === 0 || selectedCollections.has(getCollection(char.code)))
+      .filter(char => selectedCollections.has(getCollection(char.code)))
       .filter(char => 
       char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       char.code.toLowerCase().includes(searchQuery.toLowerCase())
@@ -596,8 +599,8 @@ export default function Home() {
         {/* Unranked Section */}
         <div id="unranked-container" style={{ width: `${100 - tierListWidth}%`, transition: isResizing ? 'none' : 'width 0.2s' }} className="flex flex-col overflow-hidden">
           <Card className="p-4 bg-slate-800 border-slate-700 shadow-xl m-4 flex-1 flex flex-col overflow-hidden">
-            <h3 className="text-lg font-bold text-white mb-4">Unranked ({filteredCharacters.length})</h3>
-            <div className="mb-4 relative">
+            <h3 className="text-lg font-bold text-white">Unranked ({filteredCharacters.length})</h3>
+            <div className="relative">
               <Search size={16} className="absolute left-3 top-3 text-slate-500" />
               <input
                 type="text"
@@ -612,16 +615,18 @@ export default function Home() {
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-slate-400">
-                  Coleções {selectedCollections.size > 0 ? `(${selectedCollections.size} selecionada${selectedCollections.size > 1 ? 's' : ''})` : '(todas)'}
+                  Coleções ({selectedCollections.size} de {collections.length})
                 </span>
-                {selectedCollections.size > 0 && (
-                  <button
-                    onClick={() => setSelectedCollections(new Set())}
-                    className="text-xs text-blue-400 hover:text-blue-300"
-                  >
-                    Limpar filtro
-                  </button>
-                )}
+                <button
+                  onClick={() =>
+                    setSelectedCollections(
+                      selectedCollections.size === collections.length ? new Set() : new Set(collections)
+                    )
+                  }
+                  className="text-xs text-blue-400 hover:text-blue-300"
+                >
+                  {selectedCollections.size === collections.length ? 'Desmarcar todas' : 'Selecionar todas'}
+                </button>
               </div>
               <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                 {collections.map(collection => {
