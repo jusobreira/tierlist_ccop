@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { CHARACTERS, TIER_COLORS } from '@/lib/characters';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, Download, RotateCcw, Search, Pencil, Plus, Trash2, GripVertical } from 'lucide-react';
+import { X, Download, RotateCcw, Search, Pencil, Plus, Trash2, GripVertical, FileDown, FileUp } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import { toast } from 'sonner';
 
 // Cores sugeridas para novas tiers (ciclo)
 const NEW_TIER_COLORS = ['#C77DFF', '#FF9F43', '#2DD4BF', '#F472B6', '#94A3B8', '#A3E635'];
@@ -53,32 +54,141 @@ interface DragState {
   startY: number;
 }
 
+// ---------- Persistência (localStorage) e importação/exportação (JSON) ----------
+
+const STORAGE_KEY = 'tierlist-ccop:v1';
+
+const ALL_COLLECTIONS = Array.from(new Set(CHARACTERS.map(c => getCollection(c.code))));
+const CHARACTER_IDS = new Set(CHARACTERS.map(c => c.id));
+
+const DEFAULT_TIERS: Tier[] = (Object.keys(TIER_COLORS) as (keyof typeof TIER_COLORS)[]).map(key => ({
+  id: key,
+  label: key,
+  color: TIER_COLORS[key].bg,
+}));
+
+interface SavedState {
+  tiers: Tier[];
+  tierList: TierListItem[];
+  tierListName: string;
+  selectedCollections: string[];
+  knownCollections: string[]; // coleções que existiam quando o estado foi salvo
+  tierListWidth: number;
+}
+
+const isHexColor = (value: unknown): value is string =>
+  typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every(v => typeof v === 'string');
+
+// Valida dados vindos do localStorage ou de um arquivo importado (nunca confia no formato)
+const sanitizeState = (raw: unknown): Partial<SavedState> => {
+  if (!raw || typeof raw !== 'object') return {};
+  const data = raw as Record<string, unknown>;
+  const result: Partial<SavedState> = {};
+
+  if (Array.isArray(data.tiers)) {
+    const seen = new Set<string>();
+    const tiers: Tier[] = [];
+    for (const t of data.tiers) {
+      if (!t || typeof t !== 'object') continue;
+      const { id, label, color } = t as Record<string, unknown>;
+      if (typeof id !== 'string' || typeof label !== 'string' || !isHexColor(color) || seen.has(id)) continue;
+      seen.add(id);
+      tiers.push({ id, label: label.slice(0, 100), color });
+    }
+    if (tiers.length > 0) result.tiers = tiers;
+  }
+
+  if (Array.isArray(data.tierList)) {
+    const seen = new Set<string>();
+    const items: TierListItem[] = [];
+    for (const i of data.tierList) {
+      if (!i || typeof i !== 'object') continue;
+      const { characterId, tier } = i as Record<string, unknown>;
+      if (typeof characterId !== 'string' || typeof tier !== 'string') continue;
+      if (!CHARACTER_IDS.has(characterId) || seen.has(characterId)) continue;
+      seen.add(characterId);
+      items.push({ characterId, tier });
+    }
+    result.tierList = items;
+  }
+
+  if (typeof data.tierListName === 'string') result.tierListName = data.tierListName.slice(0, 30);
+  if (isStringArray(data.selectedCollections)) result.selectedCollections = data.selectedCollections;
+  if (isStringArray(data.knownCollections)) result.knownCollections = data.knownCollections;
+  if (typeof data.tierListWidth === 'number' && data.tierListWidth > 30 && data.tierListWidth < 85) {
+    result.tierListWidth = data.tierListWidth;
+  }
+
+  return result;
+};
+
+// Descarta cartas que apontam para tiers que não existem
+const resolveTierList = (tiers: Tier[], items: TierListItem[]): TierListItem[] => {
+  const tierIds = new Set(tiers.map(t => t.id));
+  return items.filter(i => tierIds.has(i.tier));
+};
+
+const loadSavedState = (): Partial<SavedState> => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? sanitizeState(JSON.parse(raw)) : {};
+  } catch {
+    return {};
+  }
+};
+
 export default function Home() {
-  const [tierList, setTierList] = useState<TierListItem[]>([]);
+  // Estado salvo anteriormente neste navegador (lido uma única vez)
+  const [saved] = useState(loadSavedState);
+  const [tiers, setTiers] = useState<Tier[]>(saved.tiers ?? DEFAULT_TIERS);
+  const [tierList, setTierList] = useState<TierListItem[]>(() =>
+    resolveTierList(saved.tiers ?? DEFAULT_TIERS, saved.tierList ?? [])
+  );
   const [draggedCharacter, setDraggedCharacter] = useState<string | null>(null);
+  const [dragOverUnranked, setDragOverUnranked] = useState(false);
+  const [dragOverCardId, setDragOverCardId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [tiers, setTiers] = useState<Tier[]>(
-    (Object.keys(TIER_COLORS) as (keyof typeof TIER_COLORS)[]).map(key => ({
-      id: key,
-      label: key,
-      color: TIER_COLORS[key].bg,
-    }))
-  );
   const [editingTier, setEditingTier] = useState<string | null>(null);
-  // Por padrão, todas as coleções começam selecionadas
-  const [selectedCollections, setSelectedCollections] = useState<Set<string>>(
-    () => new Set(CHARACTERS.map(c => getCollection(c.code)))
-  );
+  // Por padrão, todas as coleções começam selecionadas; coleções novas (que não existiam
+  // quando o estado foi salvo) também entram marcadas
+  const [selectedCollections, setSelectedCollections] = useState<Set<string>>(() => {
+    if (!saved.selectedCollections) return new Set(ALL_COLLECTIONS);
+    const known = new Set(saved.knownCollections ?? []);
+    const selected = saved.selectedCollections.filter(c => ALL_COLLECTIONS.includes(c));
+    const added = ALL_COLLECTIONS.filter(c => !known.has(c));
+    return new Set([...selected, ...added]);
+  });
   const [draggedTierId, setDraggedTierId] = useState<string | null>(null);
   const [dragOverTierId, setDragOverTierId] = useState<string | null>(null);
-  const [tierListWidth, setTierListWidth] = useState(65);
+  const [tierListWidth, setTierListWidth] = useState(saved.tierListWidth ?? 65);
   const [isResizing, setIsResizing] = useState(false);
   const [tierColumnsCount, setTierColumnsCount] = useState(2);
   const [unrankedColumnsCount, setUnrankedColumnsCount] = useState(4);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
-  const [tierListName, setTierListName] = useState('Your Tier List');
+  const [tierListName, setTierListName] = useState(saved.tierListName ?? 'Your Tier List');
   const [editingName, setEditingName] = useState(false);
   const dragStateRef = useRef<DragState>({ isDragging: false, startX: 0, startY: 0 });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Salva automaticamente no navegador a cada mudança
+  useEffect(() => {
+    try {
+      const state: SavedState = {
+        tiers,
+        tierList,
+        tierListName,
+        selectedCollections: Array.from(selectedCollections),
+        knownCollections: ALL_COLLECTIONS,
+        tierListWidth,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // localStorage indisponível (modo privado, cheio etc.) — segue sem salvar
+    }
+  }, [tiers, tierList, tierListName, selectedCollections, tierListWidth]);
 
   useEffect(() => {
     const calculateColumns = (width: number) => {
@@ -118,9 +228,20 @@ export default function Home() {
   };
 
   const handleDragEnd = () => {
+    setDraggedCharacter(null);
+    setDragOverUnranked(false);
+    setDragOverCardId(null);
     setTimeout(() => {
       dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
     }, 100);
+  };
+
+  // Limpa todo o estado visual/lógico de um arrasto de carta
+  const clearCardDrag = () => {
+    setDraggedCharacter(null);
+    setDragOverUnranked(false);
+    setDragOverCardId(null);
+    dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
   };
 
   const handleMouseDown = () => setIsResizing(true);
@@ -199,15 +320,96 @@ export default function Home() {
     if (!draggedCharacter) return;
     const filtered = tierList.filter(item => item.characterId !== draggedCharacter);
     setTierList([...filtered, { characterId: draggedCharacter, tier }]);
-    setDraggedCharacter(null);
-    dragStateRef.current = { isDragging: false, startX: 0, startY: 0 };
+    clearCardDrag();
+  };
+
+  // Soltar sobre uma carta já classificada: coloca a carta arrastada naquela posição
+  // (antes da carta alvo; depois dela se estiver sendo movida "para frente" na mesma tier)
+  const handleDropOnCard = (targetId: string) => {
+    const dragged = draggedCharacter;
+    if (!dragged || dragged === targetId) {
+      clearCardDrag();
+      return;
+    }
+    setTierList(prev => {
+      const target = prev.find(i => i.characterId === targetId);
+      if (!target) return prev;
+      const tierIds = prev.filter(i => i.tier === target.tier).map(i => i.characterId);
+      const fromIdx = tierIds.indexOf(dragged);
+      const toIdx = tierIds.indexOf(targetId);
+      const insertAfter = fromIdx !== -1 && fromIdx < toIdx;
+      const without = prev.filter(i => i.characterId !== dragged);
+      const idx = without.findIndex(i => i.characterId === targetId) + (insertAfter ? 1 : 0);
+      const next = [...without];
+      next.splice(idx, 0, { characterId: dragged, tier: target.tier });
+      return next;
+    });
+    clearCardDrag();
+  };
+
+  // Soltar uma carta na área de Unranked tira ela da tier
+  const handleUnrankedDragOver = (e: React.DragEvent) => {
+    if (!draggedCharacter) return;
+    e.preventDefault();
+    if (!dragOverUnranked) setDragOverUnranked(true);
+  };
+
+  const handleUnrankedDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOverUnranked(false);
+  };
+
+  const handleDropOnUnranked = () => {
+    if (!draggedCharacter) return;
+    const dragged = draggedCharacter;
+    setTierList(prev => prev.filter(item => item.characterId !== dragged));
+    clearCardDrag();
   };
 
   const handleRemoveFromTier = (characterId: string) => {
     setTierList(tierList.filter(item => item.characterId !== characterId));
   };
 
-  const handleReset = () => setTierList([]);
+  // Reset pede confirmação e permite desfazer logo em seguida
+  const handleReset = () => {
+    if (tierList.length === 0) return;
+    if (!window.confirm('Remover todas as cartas das tiers?')) return;
+    const snapshot = tierList;
+    setTierList([]);
+    toast('Cartas removidas das tiers', {
+      duration: 8000,
+      action: { label: 'Desfazer', onClick: () => setTierList(snapshot) },
+    });
+  };
+
+  // Exporta tiers (nome, cor, ordem), cartas e nome da tierlist em um arquivo JSON
+  const handleExportJson = () => {
+    const data = { version: 1, tierListName, tiers, tierList };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const safeName = tierListName.trim().replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'tierlist';
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${safeName}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportJson = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permite importar o mesmo arquivo novamente
+    if (!file) return;
+    try {
+      const imported = sanitizeState(JSON.parse(await file.text()));
+      if (!imported.tiers || !imported.tierList) throw new Error('Formato inválido');
+      if (tierList.length > 0 && !window.confirm('Importar vai substituir a tierlist atual. Continuar?')) return;
+      setTiers(imported.tiers);
+      setTierList(resolveTierList(imported.tiers, imported.tierList));
+      if (imported.tierListName) setTierListName(imported.tierListName);
+      toast.success('Tierlist importada');
+    } catch {
+      toast.error('Arquivo inválido. Use um JSON exportado por esta página.');
+    }
+  };
 
   const handleCardClick = (e: React.MouseEvent, characterId: string) => {
     if (dragStateRef.current.isDragging) return;
@@ -441,6 +643,19 @@ export default function Home() {
                     <Button onClick={handleDownloadTierList} variant="outline" size="sm" className="text-slate-300 border-slate-600 hover:bg-slate-700">
                       <Download size={16} className="mr-2" /> PNG
                     </Button>
+                    <Button onClick={handleExportJson} variant="outline" size="sm" title="Salvar tierlist em um arquivo JSON" className="text-slate-300 border-slate-600 hover:bg-slate-700">
+                      <FileDown size={16} className="mr-2" /> Exportar
+                    </Button>
+                    <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" title="Carregar tierlist de um arquivo JSON" className="text-slate-300 border-slate-600 hover:bg-slate-700">
+                      <FileUp size={16} className="mr-2" /> Importar
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/json,.json"
+                      onChange={handleImportJson}
+                      className="hidden"
+                    />
                     <Button onClick={handleReset} variant="outline" size="sm" className="text-slate-300 border-slate-600 hover:bg-slate-700">
                       <RotateCcw size={16} className="mr-2" /> Reset
                     </Button>
@@ -542,10 +757,24 @@ export default function Home() {
                       {getCharactersByTier(tier.id).map(character => (
                         <div
                           key={character!.id}
-                          className="relative group flex-shrink-0 w-full cursor-pointer"
+                          className={`relative group flex-shrink-0 w-full cursor-pointer rounded-md transition-shadow ${
+                            draggedCharacter && draggedCharacter !== character!.id && dragOverCardId === character!.id
+                              ? 'ring-4 ring-blue-500'
+                              : ''
+                          }`}
                           draggable
                           onDragStart={(e) => handleDragStart(e, character!.id)}
                           onDragEnd={handleDragEnd}
+                          onDragEnter={() => draggedCharacter && setDragOverCardId(character!.id)}
+                          onDragLeave={(e) => {
+                            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOverCardId(null);
+                          }}
+                          onDrop={(e) => {
+                            // Só trata o drop aqui quando é uma carta; o arrasto de tier segue para a linha
+                            if (!draggedCharacter) return;
+                            e.stopPropagation();
+                            handleDropOnCard(character!.id);
+                          }}
                           onClick={(e) => handleCardClick(e, character!.id)}
                         >
                           <div className="relative w-full h-[140px] overflow-hidden rounded-md border-2 border-slate-600 shadow-lg">
@@ -604,7 +833,14 @@ export default function Home() {
 
         {/* Unranked Section */}
         <div id="unranked-container" style={{ width: `${100 - tierListWidth}%`, transition: isResizing ? 'none' : 'width 0.2s' }} className="flex flex-col overflow-hidden">
-          <Card className="p-4 bg-slate-800 border-slate-700 shadow-xl m-4 flex-1 flex flex-col overflow-hidden">
+          <Card
+            onDragOver={handleUnrankedDragOver}
+            onDragLeave={handleUnrankedDragLeave}
+            onDrop={handleDropOnUnranked}
+            className={`p-4 bg-slate-800 border-slate-700 shadow-xl m-4 flex-1 flex flex-col overflow-hidden transition-shadow ${
+              dragOverUnranked ? 'ring-4 ring-blue-500' : ''
+            }`}
+          >
             <h3 className="text-lg font-bold text-white">Unranked ({filteredCharacters.length})</h3>
             <div className="relative">
               <Search size={16} className="absolute left-3 top-3 text-slate-500" />
