@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { CHARACTERS, TIER_COLORS } from '@/lib/characters';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, Download, RotateCcw, Search, Pencil, Plus, Trash2 } from 'lucide-react';
+import { X, Download, RotateCcw, Search, Pencil, Plus, Trash2, GripVertical } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 // Cores sugeridas para novas tiers (ciclo)
@@ -56,6 +56,8 @@ export default function Home() {
     }))
   );
   const [editingTier, setEditingTier] = useState<string | null>(null);
+  const [draggedTierId, setDraggedTierId] = useState<string | null>(null);
+  const [dragOverTierId, setDragOverTierId] = useState<string | null>(null);
   const [tierListWidth, setTierListWidth] = useState(65);
   const [isResizing, setIsResizing] = useState(false);
   const [tierColumnsCount, setTierColumnsCount] = useState(2);
@@ -129,6 +131,42 @@ export default function Home() {
 
   const updateTierColor = (id: string, color: string) => {
     setTiers(prev => prev.map(t => (t.id === id ? { ...t, color } : t)));
+  };
+
+  // Reordenar tiers arrastando
+  const handleTierDragStart = (e: React.DragEvent, id: string) => {
+    e.stopPropagation();
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id); // necessário para o Firefox iniciar o drag
+    setDraggedTierId(id);
+  };
+
+  const handleTierDragEnd = () => {
+    setDraggedTierId(null);
+    setDragOverTierId(null);
+  };
+
+  const handleTierDragOver = (e: React.DragEvent, id: string) => {
+    if (!draggedTierId) return;
+    e.preventDefault();
+    if (dragOverTierId !== id) setDragOverTierId(id);
+  };
+
+  const handleTierDrop = (targetId: string) => {
+    if (!draggedTierId) return;
+    if (draggedTierId !== targetId) {
+      setTiers(prev => {
+        const from = prev.findIndex(t => t.id === draggedTierId);
+        const to = prev.findIndex(t => t.id === targetId);
+        if (from === -1 || to === -1) return prev;
+        const next = [...prev];
+        const [moved] = next.splice(from, 1);
+        next.splice(to, 0, moved);
+        return next;
+      });
+    }
+    setDraggedTierId(null);
+    setDragOverTierId(null);
   };
 
   const handleAddTier = () => {
@@ -382,8 +420,24 @@ export default function Home() {
 
               <div className="space-y-4 overflow-y-auto flex-1">
                 {tiers.map(tier => (
-                  <div key={tier.id} className="flex gap-4">
+                  <div
+                    key={tier.id}
+                    className="flex gap-4"
+                    onDragOver={(e) => handleTierDragOver(e, tier.id)}
+                    onDrop={() => handleTierDrop(tier.id)}
+                    style={{
+                      opacity: draggedTierId === tier.id ? 0.4 : 1,
+                      boxShadow:
+                        draggedTierId && dragOverTierId === tier.id && draggedTierId !== tier.id
+                          ? '0 -6px 0 0 #3b82f6'
+                          : undefined,
+                    }}
+                  >
                     <div
+                      draggable={editingTier !== tier.id}
+                      onDragStart={(e) => handleTierDragStart(e, tier.id)}
+                      onDragEnd={handleTierDragEnd}
+                      title="Arraste para mudar a posição"
                       className="flex items-center justify-center rounded font-bold flex-shrink-0 relative group cursor-pointer p-2 text-center"
                       style={{
                         backgroundColor: tier.color,
@@ -410,6 +464,11 @@ export default function Home() {
                       ) : (
                         <span className="block overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' }}>{tier.label}</span>
                       )}
+
+                      {/* Ícone de arrastar (não aparece no PNG exportado) */}
+                      <div className="tier-controls absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <GripVertical size={14} />
+                      </div>
 
                       {/* Controles da tier (não aparecem no PNG exportado) */}
                       <div
