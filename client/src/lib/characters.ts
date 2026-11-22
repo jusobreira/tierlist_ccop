@@ -127,6 +127,8 @@ export const CHARACTERS: Character[] = [
   { id: "p-086", code: "P-086", name: "Trafalgar Law", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/P/P-086_EN.webp", color: "#9D4EDD" },
   { id: "p-117", code: "P-117", name: "Nami", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/P/P-117_EN.webp", color: "#FF6B35" },
 
+  // PRB
+  { id: "prb01-001", code: "prb01-001", name: "Sanji", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/PRB01/PRB01-001_EN.webp", color: "#1A3A52" },
   // Rotated
   { id: "op01-001", code: "OP01-001", name: "Roronoa Zoro", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP01/OP01-001_EN.webp", color: "#1A3A52" },
   { id: "op01-002", code: "OP01-002", name: "Trafalgar Law", image: "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/one-piece/OP01/OP01-002_EN.webp", color: "#1A3A52" },
